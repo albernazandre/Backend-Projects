@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "lint": "eslint --no-inline-config --no-error-on-unmatched-pattern -c .eslintrc.json ."
+    "lint": "eslint --no-inline-config --no-error-on-unmatched-pattern -c .eslintrc.json .",
+    "test": "mocha tests/**/*.test.js --exit"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,9 @@
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {
+    "chai": "4.3",
+    "chai-http": "4.3",
+    "mocha": "10.0",
     "nodemon": "2.0"
   }
 }
