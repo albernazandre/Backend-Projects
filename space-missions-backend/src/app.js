@@ -8,7 +8,31 @@ const {
     deleteMissionData, 
 } = require('./utils/fsUtils');
 
+require('express-async-errors');
+
 const app = express();
+
+// middlewares - funcoes a serem utilizadas "no meio da logica"
+const validateMissionId = (req, res, next) => {
+  const { id } = req.params;
+
+  const idAsNumber = Number(id);
+  if (Number.isNaN(idAsNumber)) {
+    res.status(400).send({ message: 'ID inválido! Precisa ser number' });
+  } else {
+    next();
+  }
+};
+
+const validateMissionData = (req, res, next) => {
+  const requiredProperties = ['name', 'year', 'country', 'destination'];
+
+  if (requiredProperties.every((property) => property in req.body)) {
+    next();
+  } else {
+    res.status(400).send({ message: 'A missao precisa receber todos os atributos' });
+  }
+};
 
 // pega dados do body
 app.use(express.json());
@@ -23,7 +47,7 @@ app.get('/missions', async (req, res) => {
 });
 
 // create
-app.post('/missions', async (req, res) => {
+app.post('/missions', validateMissionData, async (req, res) => {
     const newMission = req.body;
     // console.log(newMission);
 
@@ -32,8 +56,7 @@ app.post('/missions', async (req, res) => {
 });
 
 // update
-
-app.put('/missions/:id', async (req, res) => {
+app.put('/missions/:id', validateMissionId, validateMissionData, async (req, res) => {
     const { id } = req.params;
     const updatedMissionData = req.body;
 
@@ -43,12 +66,20 @@ app.put('/missions/:id', async (req, res) => {
 });
 
 // delete
-
-app.delete('/missions/:id', async (req, res) => {
+app.delete('/missions/:id', validateMissionId, async (req, res) => {
   const { id } = req.params;
   await deleteMissionData(Number(id));
 
   return res.status(204).end();
+});
+
+app.use((error, req, res, next) => {
+  console.error(error.stack);
+  next(error);
+});
+
+app.use((err, req, res, _next) => {
+  res.status(500).send({ message: 'Eita, deu ruim!' });
 });
 
 module.exports = app;
