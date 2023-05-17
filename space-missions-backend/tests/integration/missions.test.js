@@ -3,15 +3,14 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const sinon = require('sinon');
-const fs = require('fs');
 
 chai.use(chaiHttp);
 const { expect } = chai;
 
 const app = require('../../src/app');
+const connection = require('../../src/db/connection');
 
-// length de 3 objetos da nossa base
-const mockMissions = JSON.stringify([
+const mockMissions = [
     {
         id: 1,
         name: 'Mariner 2',
@@ -31,19 +30,12 @@ const mockMissions = JSON.stringify([
         country: 'USA',
         destination: 'Vênus',
     },
-]);
+];
 
 describe('Rota de missoes', function () {
-    const myMockMission = {
-        name: 'Space Sauce',
-        year: '2023',
-        country: 'Brasil',
-        destination: 'Titã',
-       };
-
     describe('GET /missions', function () {
         it(' retorna uma list de missoes', async function () {
-            sinon.stub(fs.promises, 'readFile').resolves(mockMissions);
+            sinon.stub(connection, 'execute').resolves(mockMissions);
             const response = await chai.request(app).get('/missions');
 
              expect(response.status).to.be.equal(200);
@@ -55,8 +47,21 @@ describe('Rota de missoes', function () {
         });          
     });
     describe('POST /missions', function () {
+        const myMockMission = {
+            name: 'Space Sauce',
+            year: '2023',
+            country: 'EUA',
+            destination: 'Titã',
+           };
+        
         beforeEach(function () {
-            sinon.stub(fs.promises, 'writeFile').resolves();
+            const mockId = 42;
+
+            sinon.stub(connection, 'execute')
+              .onFirstCall()
+              .resolves([{ insertId: mockId }])
+              .onSecondCall()
+              .resolves([{ id: mockId, ...myMockMission }]);
         });
     
         afterEach(sinon.restore);
@@ -79,11 +84,10 @@ describe('Rota de missoes', function () {
                 .equal(myMockMission.destination);  
             // sinon.restore(); 
         });
-        it('Escreve a nova missão no arquivo de missoes, writeNewMissionData', async function () {
-            // sinon.stub(fs.promises, 'writeFile').resolves();
+        it('Escreve a nova missão no banco de dados sql', async function () {
             await chai.request(app).post('/missions').send(myMockMission);
 
-            expect(fs.promises.writeFile.called).to.be.equal(true);
+            expect(connection.execute.calledTwice).to.be.equal(true);
         });          
     });
 });

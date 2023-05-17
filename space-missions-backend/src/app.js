@@ -2,13 +2,16 @@
 // chamando o framework express
 const express = require('express');
 const {
-    readMissionsData,
-    writeNewMissionData,
     updateMissionData,
-    deleteMissionData, 
+    deleteMissionData,
 } = require('./utils/fsUtils');
 
 require('express-async-errors');
+
+const {
+  insert,
+  findAll,
+} = require('./db/missionsDb');
 
 const app = express();
 
@@ -38,10 +41,9 @@ const validateMissionData = (req, res, next) => {
 app.use(express.json());
 
 // criando endpoints => CRUD
-
 // read
 app.get('/missions', async (req, res) => {
-  const missions = await readMissionsData();
+  const missions = await findAll();
 
   return res.status(200).json({ missions });
 });
@@ -49,9 +51,8 @@ app.get('/missions', async (req, res) => {
 // create
 app.post('/missions', validateMissionData, async (req, res) => {
     const newMission = req.body;
-    // console.log(newMission);
 
-    const newMissionWithId = await writeNewMissionData(newMission);
+    const newMissionWithId = await insert(newMission);
     return res.status(201).json({ mission: newMissionWithId });
 });
 
