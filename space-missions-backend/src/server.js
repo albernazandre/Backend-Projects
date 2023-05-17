@@ -1,5 +1,7 @@
 // src/server.js
 
+require('dotenv').config();
+
 // vou disparar a aplicacao
 const app = require('./app');
 const connection = require('./db/connection');
